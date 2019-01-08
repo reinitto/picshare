@@ -298,7 +298,7 @@ app.post("/upload", upload.array("myImage"), function(req, res, next) {
     }
   }
   res.render("album", {
-    msg: "File Uploaded!",
+    msg: "Files Uploaded!",
     files: result
   });
 });
