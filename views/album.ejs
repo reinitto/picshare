@@ -9,25 +9,18 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"
     />
     <link rel="stylesheet" href="/css/style.css" />
-
-    <title>Node File Uploads</title>
+    <title>My album</title>
   </head>
   <body>
     <div class="container">
-      <h1>File Upload</h1>
+      <h1>Album Name goes here</h1>
       <%= typeof msg != 'undefined' ? msg : '' %>
-      <form action="/upload" method="POST" enctype="multipart/form-data">
-        <div class="file-field input-field">
-          <div class="btn grey">
-            <span>File</span> <input name="myImage" type="file" multiple />
-          </div>
-          <div class="file-path-wrapper">
-            <input class="file-path validate" type="text" />
-          </div>
-        </div>
-        <button type="submit" class="btn">Submit</button>
-      </form>
+
       <br />
+
+      <div id="album">
+        <% files.forEach(function(thing){ %> <%- thing %> <% }) %>
+      </div>
     </div>
 
     <script
