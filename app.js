@@ -55,7 +55,7 @@ Image = mongoose.model("images", ImageSchema);
 //DB
 mongoose
   .connect(
-    keys.mongoURI,
+    keys.mongoURI || process.env.mognoURI,
     { useNewUrlParser: true }
   )
   .then(() => console.log("MongoDB Connected"))
