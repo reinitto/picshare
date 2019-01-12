@@ -4,7 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const resizeImg = require("resize-img");
-const keys = require("./config/keys");
+//const keys = require("./config/keys");
 const Schema = mongoose.Schema;
 //Init Multer Storage
 const storage = multer.diskStorage({
@@ -55,7 +55,7 @@ Image = mongoose.model("images", ImageSchema);
 //DB
 mongoose
   .connect(
-    keys.mongoURI || process.env.mognoURI,
+    process.env.MONGO_URI,
     { useNewUrlParser: true }
   )
   .then(() => console.log("MongoDB Connected"))
