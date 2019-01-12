@@ -1,17 +1,66 @@
+const mongoose = require("mongoose");
 const express = require("express");
 const multer = require("multer");
-const ejs = require("ejs");
 const path = require("path");
-const compareImages = require("resemblejs/compareImages");
-const fs = require("mz/fs");
-// Set The Storage Engine
+const fs = require("fs");
+const resizeImg = require("resize-img");
+const keys = require("./config/keys");
+const Schema = mongoose.Schema;
+//Init Multer Storage
 const storage = multer.diskStorage({
-  destination: "./public/uploads/",
+  destination: "./public/uploads/original",
   filename: function(req, file, cb) {
     cb(null, file.originalname);
   }
 });
-// + path.extname(file.originalname)
+
+//Image Schema
+const ImageSchema = new Schema({
+  type: String,
+  data: Buffer,
+  comments: [
+    {
+      text: {
+        type: String
+      },
+      name: {
+        type: String
+      },
+      date: {
+        type: Date,
+        default: Date.now
+      }
+    }
+  ]
+});
+
+// Album schema
+const AlbumSchema = new Schema({
+  title: {
+    type: String,
+    required: true
+  },
+  subtitle: {
+    type: String
+  },
+  pictures: [Schema.Types.ObjectId],
+  date: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+Album = mongoose.model("album", AlbumSchema);
+Image = mongoose.model("images", ImageSchema);
+//DB
+mongoose
+  .connect(
+    keys.mongoURI,
+    { useNewUrlParser: true }
+  )
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log(err));
+
 // Init Upload
 const upload = multer({
   storage: storage,
@@ -36,6 +85,31 @@ function checkFileType(file, cb) {
   }
 }
 
+async function getPictures(album) {
+  let images = [];
+  let comments = [];
+  for (const pic of album.pictures) {
+    await Image.findOne({ _id: pic }, async (err, picture) => {
+      if (err) console.log(err);
+      images.push({
+        image: `data:image/jpeg;base64,${picture.data.toString("base64")}`,
+        id: picture._id
+      });
+      comments.push({
+        picId: picture._id,
+        comments: picture.comments
+      });
+    });
+  }
+  let panels = createPanels(await images);
+
+  return {
+    images,
+    comments,
+    panels
+  };
+}
+
 // Init app
 const app = express();
 
@@ -47,259 +121,309 @@ app.use(express.static("./public"));
 
 app.get("/", (req, res) => res.render("index"));
 
-const Panel = (choice, ...links) => {
-  switch (choice) {
-    case 1:
-      return `
-        <div class="panel-1">
-        <div class="panel-1-img" style="background-image:url('${links[0]}')">
-        </div>
-        </div>`;
-    case 2:
-      return `
-        <div class="panel-2">
-          <div class="panel-2-img" style="background-image:url('${links[0]}')">
-          </div>
-          <div class="panel-2-img" style="background-image:url('${links[1]}')">
-          </div>
-        </div>`;
-    case 3:
-      return `
-        <div class="panel-3">
-        <div class="panel-3-img" style="background-image:url('${links[0]}')">
-        </div>
-        <div class="panel-3-img" style="background-image:url('${links[1]}')">
-        </div>
-        <div class="panel-3-img" style="background-image:url('${links[2]}')">
-        </div>
-        </div>`;
-    case 4:
-      return `
-        <div class="panel-4">
-          <div class="p4-padding">
-          <div class="panel-4-img " style="background-image:url('${links[0]}')">
-          </div>
-            </div>
-       
-            <div class="p4-padding">
-        <div class="panel-4-img" style="background-image:url('${links[1]}')">
-        </div>
-        </div>
-
-        
-        <div class="p4-padding">
-         <div class="panel-4-img" style="background-image:url('${links[2]}')">
-        </div>
-        </div>
-
-        
-        <div class="p4-padding">
-         <div class="panel-4-img" style="background-image:url('${links[3]}')">
-        </div>
-        </div>
-        </div>`;
-    case 5:
-      return `
-        <div class="panel-5">
-          <div class='biggerSection'>
-          <div class="panel-6-img" style="background-image:url('${links[0]}')">
-          </div>
-          </div>
-          <div class='smallerSection'>
-          <div class="smallerSection-img" style="background-image:url('${
-            links[1]
-          }')">
-          </div>
-          <div class="smallerSection-img" style="background-image:url('${
-            links[2]
-          }')">
-          </div>
-          </div>
-         
-        </div>`;
-    case 6:
-      return `
-      <div class="panel-6">
-     
-      <div class='smallerSection'>
-      <div class="smallerSection-img" style="background-image:url('${
-        links[0]
-      }')">
-      </div>
-      <div class="smallerSection-img" style="background-image:url('${
-        links[1]
-      }')">
-      </div>
-      </div>
-      <div class='biggerSection'>
-      <div class="panel-6-img" style="background-image:url('${links[2]}')">
-      </div>
-      </div>
-    </div>`;
-    case 7:
-      return `
-        <div class="panel-7">
-          <div class='biggerSection'>
-          <div class="panel-6-img" style="background-image:url('${links[0]}')">
-          </div>
-          </div>
-          <div class='smallerSection'>
-          <div class="smallerSection-img" style="background-image:url('${
-            links[1]
-          }')">
-          </div>
-          <div class="smallerSection-img" style="background-image:url('${
-            links[2]
-          }')">
-          </div>
-          
-          <div class="smallerSection-img" style="background-image:url('${
-            links[3]
-          }')">
-          </div>
-          </div>
-          </div>`;
-    default:
-      break;
-  }
-};
-
-async function getDiff(img1, img2) {
-  const options = {
-    output: {
-      errorColor: {
-        red: 255,
-        green: 0,
-        blue: 255
-      },
-      errorType: "movement",
-      transparency: 0.3,
-      largeImageThreshold: 1200,
-      useCrossOrigin: false,
-      outputDiff: true
-    },
-    scaleToSameSize: true,
-    ignore: "antialiasing"
-  };
-
-  // The parameters can be Node Buffers
-  // data is the same as usual with an additional getBuffer() function
-  const data = await compareImages(
-    await fs.readFile("public/uploads/" + img1.filename),
-    await fs.readFile("public/uploads/" + img2.filename),
-    options
-  );
-  await fs.writeFile("./output.png", data.getBuffer());
-}
-
-app.post("/upload", upload.array("myImage"), function(req, res, next) {
-  // req.files is array of `photos` files
-  // req.body will contain the text fields, if there were any
-  let files = req.files;
-  // files.forEach(file => {
-  //   for (let i = 0; i < files.length; i++) {
-  //     getDiff(file, files[i]);
-  //   }
-  // });
-  let result = [];
-  for (let i = 0; i < files.length; i++) {
-    console.log("filename: ", files[i].filename);
-    // If last 1-3 pics use 3rd panel and end loop
-    if (files.length <= i + 3) {
-      let panel;
-      switch (files.length - (i + 3)) {
-        case 0:
-          panel = Panel(
-            4,
-            "uploads/" + files[i].filename,
-            "uploads/" + files[i + 1].filename,
-            "uploads/" + files[i + 2].filename
-          );
-          i = i + 3;
-          break;
-        case -1:
-          panel = Panel(
-            3,
-            "uploads/" + files[i].filename,
-            "uploads/" + files[i + 1].filenam
-          );
-          i = i + 2;
-          break;
-        case -2:
-          panel = Panel(2, "uploads/" + files[i].filename);
-          break;
-      }
-      result.push(panel);
-    } else {
-      let choice = Math.floor(Math.random() * 7 + 1);
-      if (files[i].size <= 50000) choice = Math.floor(Math.random() * 7 + 2);
-      let panel = "Panel(";
-      panel += choice + ", ";
-      let picCount;
-      switch (choice) {
-        case 1:
-          picCount = 1;
-          break;
-        case 2:
-          picCount = 2;
-          break;
-        case 3:
-          picCount = 3;
-          break;
-        case 4:
-          picCount = 4;
-          break;
-        case 5:
-          picCount = 3;
-          break;
-        case 6:
-          picCount = 3;
-          break;
-        case 7:
-          picCount = 4;
-          break;
-        default:
-          break;
-      }
-      for (let j = 0; j < picCount; j++) {
-        panel += '"';
-        panel += "uploads/" + files[i + j].filename;
-        panel += '"';
-        if (j < picCount - 1) {
-          panel += ",";
+app.get("/album/:albumName", async (req, res) => {
+  removeOldUploads("public/uploads/small");
+  let albumName = req.params.albumName;
+  Album.findOne({ title: albumName }, async (err, album) => {
+    if (err) console.log(err);
+    else {
+      let panels, title, subtitle;
+      let pictures;
+      if (album) {
+        if (album.title) title = album.title;
+        if (album.subtitle) subtitle = album.subtitle;
+        if (album.pictures != null) {
+          pictures = await getPictures(album);
+        }
+        if (pictures.images != null) {
+          panels = await createPanels(pictures.images);
         }
       }
-      panel += ")";
-      switch (choice) {
-        case 2:
-          i = i + 1;
-          break;
-        case 3:
-          i = i + 2;
-          break;
-        case 4:
-          i = i + 3;
-          break;
-        case 5:
-          i = i + 2;
-          break;
-        case 6:
-          i = i + 2;
-          break;
-        case 7:
-          i = i + 3;
-          break;
-        default:
-          break;
-      }
-      console.log("panel:", panel);
-      let res = eval(panel);
-      result.push(res);
+
+      //create panels from all pics
+      await res.render("album", {
+        msg: "Files retrieved from Db",
+        files: panels,
+        title: title,
+        subtitle: subtitle,
+        album: album,
+        comments: JSON.stringify(pictures.comments)
+      });
+    }
+  });
+});
+
+function panelPicker(maxNum) {
+  return Math.floor(Math.random() * maxNum + 1);
+}
+
+function createPanels(links, allPanels) {
+  allPanels ? (allPanels = allPanels) : (allPanels = []);
+  if (links.length == 0) {
+    return allPanels;
+  } else {
+    let choice = panelPicker(7);
+    if (choice > links.length) {
+      choice = panelPicker(links.length);
+    }
+    switch (choice) {
+      case 1:
+        allPanels.push(`
+        <div class="panel-1">
+        <div class="panel-1-img" id=${
+          links[0].id
+        }  style="background-image:url('${links[0].image}')" 
+         >
+        </div>
+        
+      </div>`);
+        links = links.slice(1);
+        return createPanels(links, allPanels);
+
+      case 2:
+        allPanels.push(`
+          <div class="panel-2">
+            <div class="panel-2-img" id=${
+              links[0].id
+            } style="background-image:url('${links[0].image}')">
+            </div>
+            <div class="panel-2-img"  id=${
+              links[1].id
+            } style="background-image:url('${links[1].image}')">
+            </div>
+          </div>`);
+        links = links.slice(2);
+        return createPanels(links, allPanels);
+
+      case 3:
+        allPanels.push(`
+          <div class="panel-3">
+          <div class="panel-3-img"id=${
+            links[0].id
+          } style="background-image:url('${links[0].image}')">
+          </div>
+          <div class="panel-3-img" id=${
+            links[1].id
+          } style="background-image:url('${links[1].image}')">
+          </div>
+          <div class="panel-3-img" id=${
+            links[2].id
+          } style="background-image:url('${links[2].image}')">
+          </div>
+          </div>`);
+        links = links.slice(3);
+        return createPanels(links, allPanels);
+
+      case 4:
+        allPanels.push(`
+          <div class="panel-4">
+            <div class="p4-padding">
+            <div class="panel-4-img "  id=${
+              links[0].id
+            } style="background-image:url('${links[0].image}')">
+            </div>
+              </div>
+
+              <div class="p4-padding">
+          <div class="panel-4-img"  id=${
+            links[1].id
+          } style="background-image:url('${links[1].image}')">
+          </div>
+          </div>
+
+          <div class="p4-padding">
+           <div class="panel-4-img"   id=${
+             links[2].id
+           } style="background-image:url('${links[2].image}')">
+          </div>
+          </div>
+
+          <div class="p4-padding">
+           <div class="panel-4-img" id=${
+             links[3].id
+           } style="background-image:url('${links[3].image}')">
+          </div>
+          </div>
+          </div>`);
+        links = links.slice(4);
+        return createPanels(links, allPanels);
+      case 5:
+        allPanels.push(`
+          <div class="panel-5">
+            <div class='biggerSection'>
+            <div class="panel-6-img" id=${
+              links[0].id
+            } style="background-image:url('${links[0].image}')">
+            </div>
+            </div>
+            <div class='smallerSection'>
+            <div class="smallerSection-img"  id=${
+              links[1].id
+            } style="background-image:url('${links[1].image}')">
+            </div>
+            <div class="smallerSection-img" id=${
+              links[2].id
+            } style="background-image:url('${links[2].image}')">
+            </div>
+            </div>
+
+          </div>`);
+        links = links.slice(3);
+        return createPanels(links, allPanels);
+      case 6:
+        allPanels.push(`
+        <div class="panel-6">
+
+        <div class='smallerSection'>
+        <div class="smallerSection-img"  id=${
+          links[0].id
+        } style="background-image:url('${links[0].image}')">
+        </div>
+        <div class="smallerSection-img"  id=${
+          links[1].id
+        } style="background-image:url('${links[1].image}')">
+        </div>
+        </div>
+        <div class='biggerSection'>
+        <div class="panel-6-img" id=${
+          links[2].id
+        } style="background-image:url('${links[2].image}')">
+        </div>
+        </div>
+      </div>`);
+        links = links.slice(3);
+        return createPanels(links, allPanels);
+      case 7:
+        allPanels.push(`
+          <div class="panel-7">
+            <div class='biggerSection'>
+            <div class="panel-6-img"  id=${
+              links[0].id
+            } style="background-image:url('${links[0].image}')">
+            </div>
+            </div>
+            <div class='smallerSection'>
+            <div class="smallerSection-img" id=${
+              links[1].id
+            } style="background-image:url('${links[1].image}')">
+            </div>
+            <div class="smallerSection-img" id=${
+              links[2].id
+            } style="background-image:url('${links[2].image}')">
+            </div>
+
+            <div class="smallerSection-img" id=${
+              links[3].id
+            } style="background-image:url('${links[3].image}')">
+            </div>
+            </div>
+            </div>`);
+        links = links.slice(4);
+        return createPanels(links, allPanels);
+      default:
+        return;
     }
   }
-  res.render("album", {
-    msg: "Files Uploaded!",
-    files: result
+}
+
+function resizeImages(array) {
+  let resizedImages = [];
+  array.forEach(file => {
+    resizeImg(fs.readFileSync(file.path), {
+      width: 512,
+      height: 512
+    }).then(buf => {
+      fs.writeFileSync(`public/uploads/small/${file.originalname}`, buf);
+      // encode the file as a base64 string.
+      let newPic = new Image({
+        name: file.originalname,
+        data: fs.readFileSync(`public/uploads/small/${file.originalname}`),
+        type: file.contentType,
+        comments: []
+      });
+      resizedImages.push(newPic);
+    });
+  });
+  return resizedImages;
+}
+function removeOldUploads(directory) {
+  fs.readdir(directory, (err, files) => {
+    if (err) throw err;
+
+    for (const file of files) {
+      fs.unlink(path.join(directory, file), err => {
+        if (err) throw err;
+      });
+    }
+  });
+}
+
+app.get("/comment/:album/:picId/:name/:text", (req, res) => {
+  console.log("req.query: ", req.query);
+  let comment = {
+    name: req.query.name,
+    text: req.query.comment,
+    date: req.query.date || Date.now()
+  };
+  Image.findOneAndUpdate(
+    { _id: req.query.id },
+    { $push: { comments: comment } },
+    { new: true },
+    (err, res) => {
+      if (err) console.log(err);
+      else {
+        console.log("Updated to this: ", res);
+      }
+    }
+  );
+  res.send(200);
+});
+app.post("/upload", upload.array("myImage"), function(req, res, next) {
+  removeOldUploads("public/uploads/small");
+  removeOldUploads("public/uploads/original");
+  // req.files is array of `photos` files
+  // req.body will contain the text fields, if there were any
+
+  let photos = req.files;
+  let { albumName: title, subtitle } = req.body;
+  let resizedImages = resizeImages(photos);
+  // let links = photos.map(photo => {
+  //   return "uploads/original/" + photo.originalname;
+  // });
+  // result = createPanels(links);
+
+  //save files to mongoDB
+  var query = Album.where({ title: title });
+  query.findOne(function(err, album) {
+    if (err) return console.log(err);
+    if (album) {
+      console.log("found album");
+      if (album == null) {
+        console.log("album is null");
+      }
+      // doc may be null if no document matched
+    } else {
+      Image.insertMany(resizedImages).then(imgArray => {
+        console.log("imgArray:", imgArray);
+        let imgIds = [];
+        imgArray.forEach(img => {
+          imgIds.push(img._id);
+        });
+        console.log("imgIds", imgIds);
+        query.findOneAndUpdate(
+          { title: title },
+          { title: title, subtitle: subtitle, pictures: imgIds },
+          { upsert: true, new: true },
+          function(err, album) {
+            if (err) console.log(err);
+            else {
+              console.log("this is the album", album);
+              res.redirect(`/album/${title}`);
+            }
+          }
+        );
+      });
+    }
   });
 });
 

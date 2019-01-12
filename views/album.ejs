@@ -12,16 +12,18 @@
     <title>My album</title>
   </head>
   <body>
+    <iframe name="iframe" style="display:none;"></iframe>
+    <div id="modal"></div>
     <div class="container">
-      <h1>Album Name goes here</h1>
-      <%= typeof msg != 'undefined' ? msg : '' %>
-
-      <br />
-
+      <% if (title) { %>
+      <h1 id="title"><%= title %></h1>
+      <% } %> <%= typeof msg != 'undefined' ? msg : '' %> <br />
       <div id="album">
-        <% files.forEach(function(thing){ %> <%- thing %> <% }) %>
+        <% typeof files != 'undefined'? files.forEach(function(thing){ %> <%-
+        thing %> <% }) : null %>
       </div>
     </div>
+    <p id="yy" style="display:none"><%= comments %></p>
 
     <script
       src="https://code.jquery.com/jquery-3.2.1.min.js"
@@ -29,5 +31,127 @@
       crossorigin="anonymous"
     ></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+    <script>
+      let modal = document.getElementById("modal");
+      let modalContent = document.getElementById("modal-content");
+      let modalImg = document.getElementById("modal-img");
+
+      window.addEventListener("click", function(e) {
+        if (e.target.tagName == "BODY" && modal.style.display == "block") {
+          modal.style.display = "none";
+        }
+      });
+
+      let panels = [
+        ...document.querySelectorAll(
+          ".panel-1-img, .panel-2-img, .panel-3-img, .panel-4-img, .panel-5-img, .panel-6-img, .panel-7-img"
+        )
+      ];
+      panels.forEach(div => {
+        div.addEventListener("click", function(event) {
+          event.stopPropagation();
+          let modal = document.getElementById("modal");
+          let albumTitle = document.getElementById("title");
+          let comments = document.getElementById("yy").innerHTML;
+
+          let pic = JSON.parse(comments).filter(item => {
+            return item.picId == this.id;
+          });
+          let commentsStyled;
+          if (pic[0].comments && pic[0].comments.length > 0) {
+            commentsStyled = pic[0].comments.map(comment => {
+              return `<div class='comment'>
+                      <div class='commentOwner'>
+                        ${comment.name}
+                      </div>
+                      <div class='commentText'>
+                        <p>${comment.text} </p>
+                        <span>${comment.date}</span>
+                      </div>
+                    </div>`;
+            });
+          }
+
+          modal.style.backgroundImage = "";
+          modal.innerHTML = `
+                <div id=${this.id}  >
+                <div id="modal-content" class="modal-content">
+                    <div id="modal-img"  class="modal-img" style="background-image:url('${this.style.backgroundImage.slice(
+                      5
+                    )}')">
+                    </div>
+                  <div id="commentSection" class='commentSection right-align'>
+                    <h1 style='
+                    padding-top: 100px'> Comments </h1>
+                      ${commentsStyled ? commentsStyled : ""}
+                      <form id='commentForm' action="/comment/:album/:picId/:name/:text" method="GET" enctype="multipart/form-data" target="iframe" >
+                      <input name='name'  id="commentName" type="text" placeholder="Enterr your name..." />
+                      <input name='id'   type="text" value=${
+                        this.id
+                      } style="visibility: hidden" />
+                      <input name='comment' id="commentInput" type="text" placeholder="Leave a comment..." />
+                      <input name='album'   type="text" value=${
+                        albumTitle.textContent
+                      } style="visibility: hidden" />
+                      <button id='submitComment' type="submit" style="display:inline"  class="btn"  >Add comment</button>
+                      </form>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+                </div>
+
+                </div>`;
+          modal.style.display = "block";
+
+          // let submitComment = document.getElementById("submitComment");
+          // let commentName = document.getElementById("commentName");
+          // let commentInput = document.getElementById("commentInput");
+          let commentForm = document.getElementById("commentForm");
+
+          commentForm.dataset.id = this.id;
+          if (submitComment) {
+            // submitComment.addEventListener("click", function(event) {
+            //   event.stopPropagation();
+            //   event.preventDefault();
+            //   let commentText = commentInput.value;
+            //   let name = commentName.value;
+            //   //  addComment(commentName, commentText)
+            //   console.log(commentText, name);
+            //   let url = " http://localhost:3000/comment";
+            //   let xhr = new XMLHttpRequest();
+            //   let formData = new FormData(commentForm);
+            //   console.log("form data:", formData);
+            //   xhr.open("POST", url, true);
+            //   xhr.setRequestHeader("Content-Type", "text/xml");
+            //   console.log("sending this data: ", name, commentText);
+            //   xhr.send(formData);
+            // });
+            commentForm.submit = function(e) {
+              e.preventDefault();
+              return false;
+            };
+            submitComment.addEventListener("submit", function(e) {
+              e.preventDefault();
+
+              let commentText = commentInput.value;
+              let name = commentName.value;
+              //  addComment(commentName, commentText)
+              console.log("title:", title.value);
+              // let url = `/comment/${title}/${
+              //   commentForm.dataset.picId
+              // }/${name}/${commentText}`;
+              // let xhr = new XMLHttpRequest();
+              // xhr.open("GET", url, true);
+              // xhr.setRequestHeader(
+              //   "Content-Type",
+              //   "application/x-www-form-urlencoded"
+              // );
+              return false;
+            });
+          }
+        });
+      });
+    </script>
   </body>
 </html>
