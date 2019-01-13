@@ -126,7 +126,6 @@ app.use(express.static(path.resolve("./public")));
 app.get("/", (req, res) => res.render("index"));
 
 app.get("/album/:albumName", async (req, res) => {
-  removeOldUploads("/uploads/small");
   let albumName = req.params.albumName;
   Album.findOne({ title: albumName }, async (err, album) => {
     if (err) console.log(err);
@@ -153,6 +152,7 @@ app.get("/album/:albumName", async (req, res) => {
         album: album,
         comments: JSON.stringify(pictures.comments)
       });
+      removeOldUploads("/uploads/small");
     }
   });
 });
