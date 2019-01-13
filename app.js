@@ -8,7 +8,7 @@ const resizeImg = require("resize-img");
 const Schema = mongoose.Schema;
 //Init Multer Storage
 const storage = multer.diskStorage({
-  destination: "/uploads/original",
+  destination: "/temp/original",
   filename: function(req, file, cb) {
     cb(null, file.originalname);
   }
@@ -126,7 +126,7 @@ app.use(express.static("./public"));
 app.get("/", (req, res) => res.render("index"));
 
 app.get("/album/:albumName", async (req, res) => {
-  removeOldUploads("uploads/small");
+  removeOldUploads("/temp/small");
   let albumName = req.params.albumName;
   Album.findOne({ title: albumName }, async (err, album) => {
     if (err) console.log(err);
@@ -337,11 +337,11 @@ function resizeImages(array) {
       width: 512,
       height: 512
     }).then(buf => {
-      fs.writeFileSync(`/uploads/small/${file.originalname}`, buf);
+      fs.writeFileSync(`/temp/small/${file.originalname}`, buf);
       // encode the file as a base64 string.
       let newPic = new Image({
         name: file.originalname,
-        data: fs.readFileSync(`/uploads/small/${file.originalname}`),
+        data: fs.readFileSync(`/temp/small/${file.originalname}`),
         type: file.contentType,
         comments: []
       });
@@ -383,8 +383,8 @@ app.get("/comment/:album/:picId/:name/:text", (req, res) => {
   res.send(200);
 });
 app.post("/upload", upload.array("myImage"), function(req, res, next) {
-  removeOldUploads("uploads/small");
-  removeOldUploads("uploads/original");
+  removeOldUploads("/temp/small");
+  removeOldUploads("/temp/original");
   // req.files is array of `photos` files
   // req.body will contain the text fields, if there were any
 
