@@ -126,7 +126,7 @@ app.use(express.static(path.resolve("./public")));
 app.get("/", (req, res) => res.render("index"));
 
 app.get("/album/:albumName", async (req, res) => {
-  removeOldUploads("/app/public/uploads/small");
+  removeOldUploads("/uploads/small");
   let albumName = req.params.albumName;
   Album.findOne({ title: albumName }, async (err, album) => {
     if (err) console.log(err);
@@ -337,11 +337,11 @@ function resizeImages(array) {
       width: 512,
       height: 512
     }).then(buf => {
-      fs.writeFileSync(`app/public/uploads/small/${file.originalname}`, buf);
+      fs.writeFileSync(`/uploads/small/${file.originalname}`, buf);
       // encode the file as a base64 string.
       let newPic = new Image({
         name: file.originalname,
-        data: fs.readFileSync(`app/public/uploads/small/${file.originalname}`),
+        data: fs.readFileSync(`/uploads/small/${file.originalname}`),
         type: file.contentType,
         comments: []
       });
@@ -383,8 +383,6 @@ app.get("/comment/:album/:picId/:name/:text", (req, res) => {
   res.send(200);
 });
 app.post("/upload", upload.array("myImage"), function(req, res, next) {
-  removeOldUploads("app/public/uploads/small");
-  removeOldUploads("app/public/uploads/original");
   // req.files is array of `photos` files
   // req.body will contain the text fields, if there were any
 
@@ -420,6 +418,8 @@ app.post("/upload", upload.array("myImage"), function(req, res, next) {
               console.log("this is the album", album);
               res.redirect(`/album/${title}`);
               res.send(200);
+              removeOldUploads("/uploads/small");
+              removeOldUploads("/uploads/original");
             }
           }
         );
