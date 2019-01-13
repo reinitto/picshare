@@ -337,11 +337,11 @@ function resizeImages(array) {
       width: 512,
       height: 512
     }).then(buf => {
-      fs.writeFileSync(`uploads/small/${file.originalname}`, buf);
+      fs.writeFileSync(`/uploads/small/${file.originalname}`, buf);
       // encode the file as a base64 string.
       let newPic = new Image({
         name: file.originalname,
-        data: fs.readFileSync(`uploads/small/${file.originalname}`),
+        data: fs.readFileSync(`/uploads/small/${file.originalname}`),
         type: file.contentType,
         comments: []
       });
@@ -391,10 +391,6 @@ app.post("/upload", upload.array("myImage"), function(req, res, next) {
   let photos = req.files;
   let { albumName: title, subtitle } = req.body;
   let resizedImages = resizeImages(photos);
-  // let links = photos.map(photo => {
-  //   return "uploads/original/" + photo.originalname;
-  // });
-  // result = createPanels(links);
 
   //save files to mongoDB
   var query = Album.where({ title: title });
