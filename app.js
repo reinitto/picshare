@@ -8,7 +8,7 @@ const resizeImg = require("resize-img");
 const Schema = mongoose.Schema;
 //Init Multer Storage
 const storage = multer.diskStorage({
-  destination: "/uploads/original",
+  destination: "./uploads/original",
   filename: function(req, file, cb) {
     cb(null, file.originalname);
   }
