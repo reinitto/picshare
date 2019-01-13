@@ -337,11 +337,13 @@ function resizeImages(array) {
       width: 512,
       height: 512
     }).then(buf => {
-      fs.writeFileSync(`./uploads/small/${file.originalname}`, buf);
+      fs.writeFileSync(__dirname + `/uploads/small/${file.originalname}`, buf);
       // encode the file as a base64 string.
       let newPic = new Image({
         name: file.originalname,
-        data: fs.readFileSync(`./uploads/small/${file.originalname}`),
+        data: fs.readFileSync(
+          __dirname + `./uploads/small/${file.originalname}`
+        ),
         type: file.contentType,
         comments: []
       });
