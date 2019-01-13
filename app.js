@@ -152,7 +152,7 @@ app.get("/album/:albumName", async (req, res) => {
         album: album,
         comments: JSON.stringify(pictures.comments)
       });
-      removeOldUploads("/uploads/small");
+      removeOldUploads("temp/uploads/small");
     }
   });
 });
@@ -337,11 +337,11 @@ function resizeImages(array) {
       width: 512,
       height: 512
     }).then(buf => {
-      fs.writeFileSync(`/uploads/small/${file.originalname}`, buf);
+      fs.writeFileSync(`temp/uploads/small/${file.originalname}`, buf);
       // encode the file as a base64 string.
       let newPic = new Image({
         name: file.originalname,
-        data: fs.readFileSync(`/uploads/small/${file.originalname}`),
+        data: fs.readFileSync(`temp/uploads/small/${file.originalname}`),
         type: file.contentType,
         comments: []
       });
@@ -418,8 +418,8 @@ app.post("/upload", upload.array("myImage"), function(req, res, next) {
               console.log("this is the album", album);
               res.redirect(`/album/${title}`);
               res.send(200);
-              removeOldUploads("/uploads/small");
-              removeOldUploads("/uploads/original");
+              removeOldUploads("temp/uploads/small");
+              removeOldUploads("temp/uploads/original");
             }
           }
         );
