@@ -4,7 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const resizeImg = require("resize-img");
-//const keys = require("./config/keys");
+const keys = require("./config/keys");
 const Schema = mongoose.Schema;
 //Init Multer Storage
 const storage = multer.diskStorage({
@@ -50,12 +50,12 @@ const AlbumSchema = new Schema({
   }
 });
 
-Album = mongoose.model("album", AlbumSchema);
-Image = mongoose.model("images", ImageSchema);
+let Album = mongoose.model("album", AlbumSchema);
+let Image = mongoose.model("images", ImageSchema);
 //DB
 mongoose
   .connect(
-    process.env.MONGO_URI,
+    process.env.MONGO_URI || keys.mongoURI,
     { useNewUrlParser: true }
   )
   .then(() => console.log("MongoDB Connected"))
@@ -91,14 +91,18 @@ async function getPictures(album) {
   for (const pic of album.pictures) {
     await Image.findOne({ _id: pic }, async (err, picture) => {
       if (err) console.log(err);
-      images.push({
-        image: `data:image/jpeg;base64,${picture.data.toString("base64")}`,
-        id: picture._id
-      });
-      comments.push({
-        picId: picture._id,
-        comments: picture.comments
-      });
+      else if (picture != null) {
+        images.push({
+          image: `data:image/jpeg;base64,${picture.data.toString("base64")}`,
+          id: picture._id
+        });
+        comments.push({
+          picId: picture._id,
+          comments: picture.comments
+        });
+      } else {
+        console.log(`picture with the id ${pic} not found`);
+      }
     });
   }
   let panels = createPanels(await images);
@@ -333,11 +337,11 @@ function resizeImages(array) {
       width: 512,
       height: 512
     }).then(buf => {
-      fs.writeFileSync(`public/uploads/small/${file.originalname}`, buf);
+      fs.writeFileSync(`uploads/small/${file.originalname}`, buf);
       // encode the file as a base64 string.
       let newPic = new Image({
         name: file.originalname,
-        data: fs.readFileSync(`public/uploads/small/${file.originalname}`),
+        data: fs.readFileSync(`uploads/small/${file.originalname}`),
         type: file.contentType,
         comments: []
       });

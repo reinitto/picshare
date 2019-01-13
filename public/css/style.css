@@ -5,6 +5,8 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 5;
+  background: blue;
+  max-height: 100vh;
 }
 
 .modal-img {
@@ -17,6 +19,7 @@
 
 .modal-content {
   display: flex;
+  max-height: 100vh;
 }
 
 .modal-content .commentSection {
@@ -25,9 +28,13 @@
 
 .commentSection {
   z-index: 5;
-  background: blue;
+  max-height: 100vh;
+  color: white;
+}
 
-  color: green;
+#commentList {
+  max-height: 50vh;
+  overflow-y: auto;
 }
 
 #album {

@@ -12,6 +12,8 @@
     "atob": "^2.1.2",
     "body-parser": "^1.18.3",
     "btoa": "^1.2.1",
+    "certbot": "^1.0.0",
+    "cron": "^1.6.0",
     "ejs": "^2.5.7",
     "express": "^4.16.2",
     "mongoose": "^5.4.3",
@@ -20,5 +22,8 @@
     "mz": "^2.7.0",
     "resemblejs": "^3.0.0",
     "resize-img": "^1.1.2"
+  },
+  "devDependencies": {
+    "crontab": "^1.2.0"
   }
 }
