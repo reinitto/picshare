@@ -388,8 +388,8 @@ app.get("/comment/:album/:picId/:name/:text", (req, res) => {
   res.send(200);
 });
 app.post("/upload", upload.array("myImage"), function(req, res, next) {
-  removeOldUploads("/uploads/small");
-  removeOldUploads("/uploads/original");
+  removeOldUploads("public/uploads/small");
+  removeOldUploads("public/uploads/original");
   // req.files is array of `photos` files
   // req.body will contain the text fields, if there were any
 
