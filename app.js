@@ -424,6 +424,7 @@ app.post("/upload", upload.array("myImage"), function(req, res, next) {
             else {
               console.log("this is the album", album);
               res.redirect(`/album/${title}`);
+              res.send(200);
             }
           }
         );
