@@ -152,7 +152,6 @@ app.get("/album/:albumName", async (req, res) => {
         album: album,
         comments: JSON.stringify(pictures.comments)
       });
-      removeOldUploads("temp/uploads/small");
     }
   });
 });
@@ -419,8 +418,6 @@ app.post("/upload", upload.array("myImage"), function(req, res, next) {
               console.log("this is the album", album);
               res.redirect(`/album/${title}`);
               res.send(200);
-              removeOldUploads("temp/uploads/small");
-              removeOldUploads("temp/uploads/original");
             }
           }
         );
