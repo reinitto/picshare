@@ -402,12 +402,10 @@ app.post("/upload", upload.array("myImage"), function(req, res, next) {
       // doc may be null if no document matched
     } else {
       Image.insertMany(resizedImages).then(imgArray => {
-        console.log("imgArray:", imgArray);
         let imgIds = [];
         imgArray.forEach(img => {
           imgIds.push(img._id);
         });
-        console.log("imgIds", imgIds);
         query.findOneAndUpdate(
           { title: title },
           { title: title, subtitle: subtitle, pictures: imgIds },
@@ -416,7 +414,7 @@ app.post("/upload", upload.array("myImage"), function(req, res, next) {
             if (err) console.log(err);
             else {
               console.log("this is the album", album);
-              res.redirect(`/album/${title}`);
+              res.redirect(__dirname + `/album/${title}`);
             }
           }
         );
