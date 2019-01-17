@@ -4,6 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const resizeImg = require("resize-img");
+const sizeOf = require("image-size");
 //const keys = require("./config/keys");
 const Schema = mongoose.Schema;
 //Init Multer Storage
@@ -214,6 +215,7 @@ function createPanels(links, allPanels) {
           } style="background-image:url('${links[2].image}')">
           </div>
           </div>`);
+
         links = links.slice(3);
         return createPanels(links, allPanels);
 
@@ -329,26 +331,69 @@ function createPanels(links, allPanels) {
   }
 }
 
-function resizeImages(array) {
-  let resizedImages = [];
-  array.forEach(file => {
-    resizeImg(fs.readFileSync(file.path), {
-      width: 512,
-      height: 512
-    }).then(buf => {
-      //  fs.writeFileSync(`temp/uploads/small/${file.originalname}`, buf);
-      // encode the file as a base64 string.
-      let newPic = new Image({
-        name: file.originalname,
-        data: buf,
-        //    data: fs.readFileSync(`temp/uploads/small/${file.originalname}`),
-        type: file.contentType,
-        comments: []
-      });
-      resizedImages.push(newPic);
-    });
+function getDimensions(file) {
+  return new Promise((resolve, reject) => {
+    let dimensions = sizeOf(file.path);
+    let newFile = { ...file, dimensions };
+    resolve(newFile);
   });
-  return resizedImages;
+}
+
+function resize(file) {
+  if (file.dimensions.width >= file.dimensions.height) {
+    return new Promise((resolve, reject) => {
+      resolve(
+        resizeImg(fs.readFileSync(file.path), {
+          width: 900,
+          height: 600
+        })
+      );
+    });
+  } else {
+    return new Promise((resolve, reject) => {
+      resolve(
+        resizeImg(fs.readFileSync(file.path), {
+          width: 600,
+          height: 900
+        })
+      );
+    });
+  }
+}
+
+function saveImage(buf, file) {
+  let newPic = {
+    name: file.originalname,
+    data: buf,
+    type: file.contentType,
+    comments: []
+  };
+  return new Promise((resolve, reject) => {
+    Image.create(newPic)
+      .then(data => {
+        resolve(data._id);
+      })
+      .catch(err => reject(err));
+  });
+}
+
+function saveImgtoDb(file) {
+  return getDimensions(file)
+    .then(file => resize(file))
+    .then(buf => saveImage(buf, file));
+}
+
+function resizeImages(array) {
+  let ids = [];
+  for (let i = 0; i < array.length; i++) {
+    ids.push(
+      new Promise((resolve, reject) => {
+        resolve(saveImgtoDb(array[i]));
+      })
+    );
+    console.log("ids", ids);
+  }
+  return ids;
 }
 function removeOldUploads(directory) {
   fs.readdir(directory, (err, files) => {
@@ -385,41 +430,44 @@ app.get("/comment/:album/:picId/:name/:text", (req, res) => {
 app.post("/upload", upload.array("myImage"), function(req, res, next) {
   // req.files is array of `photos` files
   // req.body will contain the text fields, if there were any
-
   let photos = req.files;
   let { albumName: title, subtitle } = req.body;
-  let resizedImages = resizeImages(photos);
+  Promise.all(resizeImages(photos)).then(ids => {
+    console.log("vals:", ids);
+    Album.findOne({ title: title }, function(err, album) {
+      if (err) return console.log(err);
+      if (album) {
+        console.log("found album");
+        res.send(200);
+        if (album == null) {
+          console.log("album is null");
+        }
+        // doc may be null if no document matched
+      } else {
+        // Image.insertMany(resizedImages).thenimgArray
+        //   let imgIds = [];
+        //   imgArray.forEach(img => {
+        //     imgIds.push(img._id);
+        //   });
 
-  //save files to mongoDB
-  var query = Album.where({ title: title });
-  query.findOne(function(err, album) {
-    if (err) return console.log(err);
-    if (album) {
-      console.log("found album");
-      if (album == null) {
-        console.log("album is null");
-      }
-      // doc may be null if no document matched
-    } else {
-      Image.insertMany(resizedImages).then(imgArray => {
-        let imgIds = [];
-        imgArray.forEach(img => {
-          imgIds.push(img._id);
-        });
-        query.findOneAndUpdate(
+        Album.findOneAndUpdate(
           { title: title },
-          { title: title, subtitle: subtitle, pictures: imgIds },
+          {
+            title: title,
+            subtitle: subtitle,
+            pictures: ids
+          },
           { upsert: true, new: true },
           function(err, album) {
             if (err) console.log(err);
             else {
-              console.log("this is the album", album);
+              console.log("redirecting...");
               res.redirect(`album/${title}`);
             }
           }
         );
-      });
-    }
+      }
+    });
   });
 });
 
