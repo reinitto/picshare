@@ -5,7 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const resizeImg = require("resize-img");
 const sizeOf = require("image-size");
-const keys = require("./config/keys");
+//const keys = require("./config/keys");
 const cloudinary = require("cloudinary");
 const bodyParser = require("body-parser");
 //Cloudinary config
