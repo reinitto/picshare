@@ -10,9 +10,9 @@ const cloudinary = require("cloudinary");
 const bodyParser = require("body-parser");
 //Cloudinary config
 cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME || keys.CLOUD_NAME,
-  api_key: process.env.CLOUD_KEY || keys.CLOUD_KEY,
-  api_secret: process.env.CLOUD_SECRET || keys.CLOUD_SECRET
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET
 });
 
 const Schema = mongoose.Schema;
