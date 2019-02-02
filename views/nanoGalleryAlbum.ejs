@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.min.js"
+      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous"
+    ></script>
+    <link
+      href="https://unpkg.com/nanogallery2/dist/css/nanogallery2.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+  </head>
+  <body>
+    <div
+      id="my_nanogallery2"
+      data-nanogallery2="{
+        &quot;itemsBaseURL&quot;: &quot;http://res.cloudinary.com/dxnq7rjdn/image/upload/&quot;,
+        &quot;thumbnailWidth&quot;: &quot;200&quot;,
+        &quot;thumbnailAlignment&quot;: &quot;center&quot;
+        &quot;thumbnailDisplayTransition&quot;: &quot;slideUp&quot;,
+        &quot;thumbnailDisplayTransitionDuration&quot;: 2400,
+        &quot;galleryDisplayMode&quot;: &quot;moreButton&quot;,
+        &quot;thumbnailHoverEffect2&quot;: &quot;imageBlurOn|labelSlideUp|imageScaleIn80&quot;,
+      }"
+    ></div>
+
+    <script type="text/javascript">
+        let data = <%-JSON.stringify(nanoGallery)%>
+        console.log('data:', data)
+        data = data.map((url)=>{
+            return{src: url.toString()}
+        })
+
+        console.log('data:', data)
+
+      jQuery(document).ready(function() {
+        console.log("nanogallery:", data);
+        jQuery("#my_nanogallery2").nanogallery2({
+          items: data,
+          thumbnailWidth: "auto",
+          thumbnailHeight: 500,
+          itemsBaseURL: "http://res.cloudinary.com/dxnq7rjdn/image/upload/",
+          thumbnailDisplayTransition: "slideUp",
+        thumbnailDisplayTransitionDuration: 2400,
+          locationHash: false,
+          galleryDisplayMode: "moreButton",
+          thumbnailHoverEffect2: "imageBlurOn|labelSlideUp|imageScaleIn80",
+        });
+      });
+    </script>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/nanogallery2/dist/jquery.nanogallery2.min.js"
+    ></script>
+  </body>
+</html>

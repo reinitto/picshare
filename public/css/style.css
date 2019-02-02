@@ -219,3 +219,12 @@ input::-webkit-input-placeholder {
   font-size: 2rem;
   line-height: 3;
 }
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+#submitButton {
+  align-self: center;
+}

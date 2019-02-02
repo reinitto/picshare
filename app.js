@@ -5,7 +5,16 @@ const path = require("path");
 const fs = require("fs");
 const resizeImg = require("resize-img");
 const sizeOf = require("image-size");
-//const keys = require("./config/keys");
+const keys = require("./config/keys");
+const cloudinary = require("cloudinary");
+const bodyParser = require("body-parser");
+//Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.cloud_name || keys.CLOUD_NAME,
+  api_key: process.env.api_key || keys.CLOUD_KEY,
+  api_secret: process.env.api_secret || keys.CLOUD_SECRET
+});
+
 const Schema = mongoose.Schema;
 //Init Multer Storage
 const storage = multer.diskStorage({
@@ -41,10 +50,7 @@ const AlbumSchema = new Schema({
     type: String,
     required: true
   },
-  subtitle: {
-    type: String
-  },
-  pictures: [Schema.Types.ObjectId],
+  pictures: [String],
   date: {
     type: Date,
     default: Date.now
@@ -124,34 +130,22 @@ app.set("view engine", "ejs");
 // Public Folder
 app.use(express.static(path.resolve("./public")));
 
+app.use(bodyParser.urlencoded({ extended: false }));
 app.get("/", (req, res) => res.render("index"));
 
-app.get("/album/:albumName", async (req, res) => {
+app.get("/album/:albumName", (req, res) => {
   let albumName = req.params.albumName;
-  Album.findOne({ title: albumName }, async (err, album) => {
+  Album.findOne({ title: albumName }, (err, album) => {
     if (err) console.log(err);
     else {
-      let panels, title, subtitle;
-      let pictures;
-      if (album) {
-        if (album.title) title = album.title;
-        if (album.subtitle) subtitle = album.subtitle;
-        if (album.pictures != null) {
-          pictures = await getPictures(album);
-        }
-        if (pictures.images != null) {
-          panels = await createPanels(pictures.images);
-        }
-      }
+      let title = album.title;
+      let urls = album.pictures;
 
       //create panels from all pics
-      await res.render("album", {
+      res.render("nanoGalleryAlbum", {
         msg: "Files retrieved from Db",
-        files: panels,
         title: title,
-        subtitle: subtitle,
-        album: album,
-        comments: JSON.stringify(pictures.comments)
+        nanoGallery: urls
       });
     }
   });
@@ -427,48 +421,51 @@ app.get("/comment/:album/:picId/:name/:text", (req, res) => {
   );
   res.send(200);
 });
-app.post("/upload", upload.array("myImage"), function(req, res, next) {
-  // req.files is array of `photos` files
-  // req.body will contain the text fields, if there were any
-  let photos = req.files;
-  let { albumName: title, subtitle } = req.body;
-  Promise.all(resizeImages(photos)).then(ids => {
-    console.log("vals:", ids);
-    Album.findOne({ title: title }, function(err, album) {
-      if (err) return console.log(err);
-      if (album) {
-        console.log("found album");
-        res.send(200);
-        if (album == null) {
-          console.log("album is null");
-        }
-        // doc may be null if no document matched
-      } else {
-        // Image.insertMany(resizedImages).thenimgArray
-        //   let imgIds = [];
-        //   imgArray.forEach(img => {
-        //     imgIds.push(img._id);
-        //   });
-
-        Album.findOneAndUpdate(
-          { title: title },
-          {
-            title: title,
-            subtitle: subtitle,
-            pictures: ids
-          },
-          { upsert: true, new: true },
-          function(err, album) {
-            if (err) console.log(err);
-            else {
-              console.log("redirecting...");
-              res.redirect(`album/${title}`);
-            }
-          }
-        );
-      }
-    });
+app.post("/upload", upload.array("myImage"), async (req, res) => {
+  let title = req.body.albumName.toString();
+  console.log("title:", title);
+  /* we would receive a request of file paths as array */
+  let filePaths = req.files.map(file => {
+    return file.path;
   });
+
+  let multipleUpload = new Promise(async (resolve, reject) => {
+    let upload_len = filePaths.length,
+      upload_res = new Array();
+
+    for (let i = 0; i <= upload_len + 1; i++) {
+      let filePath = filePaths[i];
+      await cloudinary.v2.uploader.upload(filePath, (error, result) => {
+        if (upload_res.length === upload_len) {
+          /* resolve promise after upload is complete */
+          resolve(upload_res);
+        } else if (result) {
+          /*push public_urls in an array */
+
+          upload_res.push(result.url);
+        } else if (error) {
+          console.log(error);
+          reject(error);
+        }
+      });
+    }
+  })
+    .then(result => result)
+    .catch(error => error);
+
+  /*waits until promise is resolved before sending back response to user*/
+  let publicUrls = await multipleUpload;
+  console.log("publicUrls", publicUrls);
+  let nanoGallery = publicUrls.map(url => {
+    return {
+      src: url.slice(49)
+    };
+  });
+  console.log("ng", nanoGallery);
+  let urlsForAlbum = publicUrls.map(url => url.slice(49));
+
+  Album.create({ title: title, pictures: urlsForAlbum });
+  res.redirect(`/album/${title}`);
 });
 
 const port = process.env.PORT || 3000;

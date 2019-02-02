@@ -14,7 +14,7 @@
   </head>
   <body>
     <div class="container">
-      <h1 class="center-align">Super-duper photo uploader</h1>
+      <h1 class="center-align">Gallery Builder</h1>
       <%= typeof msg != 'undefined' ? msg : '' %>
       <form action="/upload" method="POST" enctype="multipart/form-data">
         <div>
@@ -35,7 +35,7 @@
             />
           </div>
         </div>
-        <button type="submit" class="btn">Submit</button>
+        <button id="submitButton" type="submit" class="btn">Submit</button>
       </form>
       <br />
     </div>
