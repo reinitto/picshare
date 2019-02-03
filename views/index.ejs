@@ -8,6 +8,10 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"
     />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/css/style.css" />
 
     <title>Node File Uploads</title>
@@ -15,7 +19,10 @@
   <body>
     <div class="container">
       <h1 class="center-align">Gallery Builder</h1>
-      <%= typeof msg != 'undefined' ? msg : '' %>
+      <h5 class="error-message">
+        <%= typeof message != 'undefined' ? message.message : '' %>
+      </h5>
+
       <form action="/upload" method="POST" enctype="multipart/form-data">
         <div>
           <input
@@ -33,11 +40,16 @@
               type="text"
               placeholder="Choose photos"
             />
-
             <p>Please make sure each photo is under 10mb</p>
           </div>
         </div>
-        <button id="submitButton" type="submit" class="btn">Submit</button>
+        <button
+          id="submitButton"
+          class="btn waves-effect waves-light"
+          type="submit"
+        >
+          Create gallery <i class="material-icons right">send</i>
+        </button>
       </form>
       <br />
     </div>

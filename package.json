@@ -24,7 +24,8 @@
     "mz": "^2.7.0",
     "nanogallery2": "^2.3.0",
     "resemblejs": "^3.0.0",
-    "resize-img": "^1.1.2"
+    "resize-img": "^1.1.2",
+    "url": "^0.11.0"
   },
   "devDependencies": {
     "crontab": "^1.2.0"
