@@ -107,11 +107,12 @@
       </form>
     </div>
     <script type="text/javascript">
-              let data = <%-JSON.stringify(nanoGallery)%>
-              data = data.map((url)=>{
-                  return{src: url.toString()}
-              })
+
             jQuery(document).ready(function() {
+                let data = <%-JSON.stringify(nanoGallery)%>
+              data = data.map((url)=>{
+                  return{src: url}
+              })
               jQuery("#my_nanogallery2").nanogallery2({
                 items: data,
                 thumbnailWidth: 100,
