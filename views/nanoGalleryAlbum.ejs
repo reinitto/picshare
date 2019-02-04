@@ -26,6 +26,9 @@
     <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
+        <h5 class="error-message">
+                <%= typeof message != 'undefined' ? message : '' %>
+              </h5>
     <div
       id="my_nanogallery2"
       data-nanogallery2="{
@@ -118,7 +121,7 @@
               thumbnailDisplayTransitionDuration: 400,
                 locationHash: false,
                 galleryDisplayMode: "moreButton",
-                thumbnailHoverEffect2: "imageBlurOn|labelSlideUp|imageScaleIn80",
+                thumbnailHoverEffect2: "labelSlideUp|imageScaleIn80",
                 galleryMosaic:             [
                                              { "w": 5, "h": 3, "c": 2, "r": 1 },
                                              { "w": 2, "h": 2, "c": 1, "r": 2 },
@@ -174,7 +177,7 @@
                 thumbnailDisplayTransitionDuration: 400,
                 locationHash: false,
                 galleryDisplayMode: "moreButton",
-                thumbnailHoverEffect2: "imageBlurOn|labelSlideUp|imageScaleIn80",
+                thumbnailHoverEffect2: "labelSlideUp|imageScaleIn80",
               });
                   console.log('style2 set')
                   break;
@@ -189,7 +192,7 @@
                 thumbnailDisplayTransitionDuration: 400,
                 locationHash: false,
                 galleryDisplayMode: "moreButton",
-                thumbnailHoverEffect2: "imageBlurOn|labelSlideUp|imageScaleIn80",
+                thumbnailHoverEffect2: "labelSlideUp|imageScaleIn80",
                 galleryMosaic:             [
                                              { "w": 5, "h": 3, "c": 8, "r": 1 },
                                              { "w": 2, "h": 2, "c": 12, "r": 2 },

@@ -2,9 +2,6 @@ const mongoose = require("mongoose");
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-// const fs = require("fs");
-// const resizeImg = require("resize-img");
-// const sizeOf = require("image-size");
 //const keys = require("./config/keys");
 const cloudinary = require("cloudinary");
 const bodyParser = require("body-parser");
@@ -16,14 +13,16 @@ cloudinary.config({
   api_secret: process.env.CLOUD_SECRET || keys.CLOUD_SECRET
 });
 
-const Schema = mongoose.Schema;
-//Init Multer Storage
-const storage = multer.diskStorage({
-  destination: "temp/uploads/original",
-  filename: function(req, file, cb) {
-    cb(null, file.originalname);
+const storage = multer.memoryStorage();
+// Init Upload
+const upload = multer({
+  storage: storage,
+  fileFilter: function(req, file, cb) {
+    checkFileType(file, cb);
   }
 });
+
+const Schema = mongoose.Schema;
 
 // Album schema
 const AlbumSchema = new Schema({
@@ -38,25 +37,6 @@ const AlbumSchema = new Schema({
   }
 });
 
-let Album = mongoose.model("album", AlbumSchema);
-//DB
-mongoose
-  .connect(
-    process.env.MONGO_URI || keys.mongoURI,
-    { useNewUrlParser: true }
-  )
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
-
-// Init Upload
-const upload = multer({
-  storage: storage,
-  fileFilter: function(req, file, cb) {
-    checkFileType(file, cb);
-  }
-});
-
-// Check File Type
 function checkFileType(file, cb) {
   // Allowed ext
   const filetypes = /jpeg|jpg|png|gif/;
@@ -72,6 +52,16 @@ function checkFileType(file, cb) {
   }
 }
 
+const Album = mongoose.model("album", AlbumSchema);
+//DB
+mongoose
+  .connect(
+    process.env.MONGO_URI || keys.mongoURI,
+    { useNewUrlParser: true }
+  )
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log(err));
+
 // Init app
 const app = express();
 
@@ -84,69 +74,70 @@ app.use(express.static(path.resolve("./public")));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.get("/", (req, res) => {
   let message = req.query;
-  console.log(req.query);
   res.render("index", { message: message });
 });
 app.post("/update", upload.array("myImage"), async (req, res) => {
-  let photos = req.files;
-  //getting request url for album name
-  const url = new URL(req.headers.referer);
-  let re = /%20/g;
-  let title = url.pathname.slice(7).replace(re, " ");
-  /* we would receive a request of file paths as array */
-  let filePaths = photos.map(file => {
-    return file.path;
-  });
-  let multipleUpload = new Promise(async (resolve, reject) => {
-    let upload_len = filePaths.length,
-      upload_res = new Array();
-    for (let i = 0; i <= upload_len + 1; i++) {
-      let filePath = filePaths[i];
-      await cloudinary.v2.uploader.upload(filePath, (error, result) => {
-        if (upload_res.length === upload_len) {
-          /* resolve promise after upload is complete */
-          resolve(upload_res);
-        } else if (result) {
-          /*push public_urls in an array */
+  try {
+    let pictures = req.files;
+    //getting request url for album name
+    const url = new URL(req.headers.referer);
+    let title = decodeURIComponent(url.pathname).slice(7);
 
-          upload_res.push(result.url);
-        } else if (error) {
-          console.log(error);
-          reject(error);
-        }
+    /* we would receive a request of file paths as array */
+    if (pictures.length == 0) {
+      console.log("No pictures selected");
+      var message = encodeURIComponent(
+        "No pictures selected, please add more photos before updating gallery"
+      );
+      res.redirect(`${url}/?message=${message}`);
+      return;
+    }
+
+    let fileBuffers = req.files.map(file => {
+      return file.buffer;
+    });
+    //Array of promises with pic urls
+    let fileUrls = fileBuffers.map(async file => {
+      return new Promise(async (resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(async result => {
+            let url = await result.url;
+            resolve(url);
+          })
+          .end(file);
       });
-    }
-  })
-    .then(result => result)
-    .catch(error => error);
-  /*waits until promise is resolved before sending back response to user*/
-  let publicUrls = await multipleUpload;
-  console.log("publicUrls", publicUrls);
-  let urlsForAlbum = publicUrls.map(url => url.slice(49));
-  Album.findOneAndUpdate(
-    { title: title },
-    { $push: { pictures: urlsForAlbum } },
-    { new: true },
-    (err, album) => {
-      if (err) {
-        console.log(err);
-      } else if (album) {
-        let title = album.title;
-        let urls = album.pictures;
+    });
 
-        //Re-render to see new pics
-        res.redirect(`/album/${title}`);
-      }
-    }
-  );
+    //waits until promise is resolved before updating album
+    Promise.all(fileUrls).then(urls => {
+      Album.findOneAndUpdate(
+        { title: title },
+        { $push: { pictures: urls } },
+        { new: true },
+        (err, album) => {
+          if (err) {
+            console.log(err);
+          } else if (album) {
+            console.log("album found and updated");
+            let title = album.title;
+            //Re-render to see new pics
+            res.redirect(`/album/${title}`);
+          }
+        }
+      );
+    });
+  } catch (err) {
+    console.log("Error caught", err);
+  }
 });
 
 app.delete("/album/:albumName", (req, res) => {
   console.log("deleting...");
   let albumName = req.params.albumName;
-  console.log(albumName);
+
+  console.log("deleting album named:", albumName);
   Album.findOneAndDelete({ title: albumName }, function(err, album) {
-    if (err) console.log(err);
+    if (err) console.log("error finding and deleting album", err);
     if (album) {
     }
     res.sendStatus(200);
@@ -155,16 +146,17 @@ app.delete("/album/:albumName", (req, res) => {
 
 app.get("/album/:albumName", (req, res) => {
   let albumName = req.params.albumName;
+  let message = req.query.message;
   Album.findOne({ title: albumName }, (err, album) => {
     if (err) {
-      console.log(err);
+      console.log("error finding album: ", err);
     } else if (album) {
       let title = album.title;
       let urls = album.pictures;
 
       //Render nano gallery view
       res.render("nanoGalleryAlbum", {
-        msg: "Files retrieved from Db",
+        message: message,
         title: title,
         nanoGallery: urls
       });
@@ -176,51 +168,64 @@ app.get("/album/:albumName", (req, res) => {
 });
 
 app.post("/upload", upload.array("myImage"), async (req, res) => {
-  let title = req.body.albumName.toString();
-  console.log("title:", title);
-  //if no album name provided, reload index
-  if (!title) {
-    res.redirect("/");
-  }
-
-  let album = await Album.findOne({ title: title });
-  if (album) {
-    console.log("Album name taken");
-    var message = encodeURIComponent("Album name taken");
-    res.redirect("/?message=" + message);
-  } else {
-    /* receive a request of file paths as array */
-    let filePaths = req.files.map(file => {
-      return file.path;
-    });
-    let multipleUpload = new Promise(async (resolve, reject) => {
-      let upload_len = filePaths.length,
-        upload_res = new Array();
-      for (let i = 0; i <= upload_len + 1; i++) {
-        let filePath = filePaths[i];
-        await cloudinary.v2.uploader.upload(filePath, (error, result) => {
-          if (upload_res.length === upload_len) {
-            /* resolve promise after upload is complete */
-            resolve(upload_res);
-          } else if (result) {
-            /*push public_urls in an array */
-
-            upload_res.push(result.url);
-          } else if (error) {
-            console.log(error);
-            reject(error);
-          }
+  try {
+    let title = req.body.albumName.toString();
+    let pictures = req.files;
+    //if no album name provided, redirect to homepage with a message
+    if (!title) {
+      console.log("No title given");
+      var message = encodeURIComponent("No title given");
+      res.redirect("/?message=" + message);
+      return;
+    }
+    //If no pictures selected, redirect to homepage with a message
+    if (pictures.length == 0) {
+      console.log("No pictures selected");
+      var message = encodeURIComponent(
+        "No pictures selected, please add photos before creating a gallery"
+      );
+      res.redirect("/?message=" + message);
+      return;
+    }
+    //Find album name in collection
+    let album = await Album.findOne({ title: title }).catch(err =>
+      console.log("caught error in finding album:", err)
+    );
+    if (album) {
+      //If album name already exists, redirect to homepage with a message
+      console.log("Album name taken");
+      var message = encodeURIComponent("Album name taken");
+      res.redirect("/?message=" + message);
+    } else if (album === null) {
+      //If album name not taken
+      console.log("Name available");
+      //file buffer array
+      let fileBuffers = req.files.map(file => {
+        return file.buffer;
+      });
+      //Array of promises with pic urls
+      let fileUrls = fileBuffers.map(async file => {
+        return new Promise(async (resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(async result => {
+              let url = await result.url;
+              resolve(url);
+            })
+            .end(file);
         });
-      }
-    })
-      .then(result => result)
-      .catch(error => error);
-    /*waits until promise is resolved before sending back response to user*/
-    let publicUrls = await multipleUpload;
-    console.log("publicUrls", publicUrls);
-    let urlsForAlbum = publicUrls.map(url => url.slice(49));
-    Album.create({ title: title, pictures: urlsForAlbum });
-    res.redirect(`/album/${title}`);
+      });
+
+      //waits until promise is resolved before creating album
+      Promise.all(fileUrls).then(urls => {
+        Album.create({ title: title, pictures: urls }, function(err, album) {
+          if (err) console.log("error creating album", err);
+          console.log("redirecting to album");
+          res.redirect(`/album/${title}`);
+        });
+      });
+    }
+  } catch (err) {
+    console.log("error cought:", err);
   }
 });
 
