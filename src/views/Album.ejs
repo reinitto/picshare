@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+
+    <link
+      href="https://unpkg.com/nanogallery2/dist/css/nanogallery2.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+     <link rel="stylesheet" href="/public/css/style.css" type="text/css" />
+    <script
+    src="https://code.jquery.com/jquery-3.2.1.min.js"
+    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    crossorigin="anonymous"
+  ></script>
+  </head>
+  <body>
+        <h5 class="error-message">
+                <%= typeof message != 'undefined' ? message : '' %>
+              </h5>
+    <div
+      id="my_nanogallery2"
+      data-nanogallery2="{
+        &quot;itemsBaseURL&quot;: &quot;http://res.cloudinary.com/dxnq7rjdn/image/upload/&quot;,
+        &quot;thumbnailWidth&quot;: &quot;200&quot;,
+        &quot;thumbnailAlignment&quot;: &quot;center&quot;
+        &quot;thumbnailDisplayTransition&quot;: &quot;slideUp&quot;,
+        &quot;thumbnailDisplayTransitionDuration&quot;: 2400,
+        &quot;galleryDisplayMode&quot;: &quot;moreButton&quot;,
+        &quot;thumbnailHoverEffect2&quot;: &quot;labelSlideUp|imageScaleIn80&quot;,
+       
+      }"
+    ></div>
+
+    <div id="buttonContainer">
+      <button
+        data-title="Style1"
+        value="Style1"
+        type="button"
+        class="layout btn "
+      >
+        Style1
+      </button>
+      <button
+        data-title="Style2"
+        value="Style2"
+        type="button"
+        class="layout btn "
+      >
+        Style2
+      </button>
+      <button
+        data-title="Style3"
+        value="Style3"
+        type="button"
+        class="layout btn "
+      >
+        Style3
+      </button>
+      <a
+        data-title="Add more pictures"
+        class="btn-floating btn-large waves-effect waves-light green add-button"
+        ><i class="material-icons">add</i>
+      </a>
+      <a
+        data-title="New album"
+        class="btn-floating btn-large waves-effect waves-light  home-button "
+        ><i class="  material-icons">fiber_new</i>
+      </a>
+      <a
+        data-title="Delete album"
+        class=" delete-album btn-large btn-floating  red "
+        ><i class=" large material-icons">delete_forever</i>Delete album
+      </a>
+
+      <form
+        action="/update"
+        method="POST"
+        enctype="multipart/form-data"
+        class="add-img"
+      >
+        <div class="file-field input-field ">
+          <div class="file-path-wrapper">
+           
+            <input
+              class="file-path validate input-placeholder"
+              type="text"
+              placeholder="Choose photos"
+            > 
+            <input name="myImage" type="file" multiple />
+            <p>Please make sure each photo is under 10mb</p>
+          </div>
+        </div>
+
+        <button type="submit" class=" btn add-photos ">Add Photos</button>
+      </form>
+    </div>
+  
+    <script >    jQuery(document).ready(function() {
+      let urls  =  <%- JSON.stringify(nanoGallery) %> ;
+     
+       data = urls.map((url)=>{ 
+          return{src: url}
+         })
+      jQuery("#my_nanogallery2").nanogallery2({
+        items: data,
+        thumbnailWidth: 100,
+        thumbnailHeight: 100,
+        itemsBaseURL: "",
+        thumbnailDisplayTransition: "slideUp",
+      thumbnailDisplayTransitionDuration: 400,
+        locationHash: false,
+        galleryDisplayMode: "moreButton",
+        thumbnailHoverEffect2: "labelSlideUp|imageScaleIn80",
+        galleryMosaic:             [
+                                     { "w": 5, "h": 3, "c": 2, "r": 1 },
+                                     { "w": 2, "h": 2, "c": 1, "r": 2 },
+                                     { "w": 2, "h": 2, "c": 7, "r": 2 },
+                                     { "w": 2, "h": 2, "c": 2, "r": 4 },
+                                     { "w": 3, "h": 4, "c": 4, "r": 4 },
+                                     { "w": 3, "h": 4, "c": 7, "r": 4 },
+                                     { "w": 2, "h": 2, "c": 10, "r": 5 },
+                                     { "w": 4, "h": 2, "c": 11, "r": 6 }
+                                   ],
+      });
+    });
+
+    let styleButtons = document.getElementsByClassName('layout btn')
+    const buttonArray = Array.from(styleButtons)
+    buttonArray.map((button)=>{
+        button.addEventListener('click', function(e){
+        console.log('target value: ',e.target.value)
+      switch(e.target.value){
+          case "Style1":
+          jQuery("#my_nanogallery2").nanogallery2('destroy');
+          jQuery("#my_nanogallery2").nanogallery2({
+        items: data,
+        thumbnailWidth: 100,
+        thumbnailHeight: 100,
+        itemsBaseURL: "http://res.cloudinary.com/dxnq7rjdn/image/upload/",
+        thumbnailDisplayTransition: "slideUp",
+        thumbnailDisplayTransitionDuration: 400,
+        locationHash: false,
+        galleryDisplayMode: "moreButton",
+        thumbnailHoverEffect2: "labelSlideUp|imageScaleIn80",
+        galleryMosaic:             [
+                                     { "w": 5, "h": 3, "c": 2, "r": 1 },
+                                     { "w": 2, "h": 2, "c": 1, "r": 2 },
+                                     { "w": 2, "h": 2, "c": 7, "r": 2 },
+                                     { "w": 2, "h": 2, "c": 2, "r": 4 },
+                                     { "w": 3, "h": 4, "c": 4, "r": 4 },
+                                     { "w": 3, "h": 4, "c": 7, "r": 4 },
+                                     { "w": 2, "h": 2, "c": 10, "r": 5 },
+                                     { "w": 4, "h": 2, "c": 11, "r": 6 }
+                                   ],
+      });
+          console.log('style1 set')
+          break;
+          case "Style2":
+          jQuery("#my_nanogallery2").nanogallery2('destroy');
+          jQuery("#my_nanogallery2").nanogallery2({
+        items: data,
+        thumbnailWidth: 500,
+        thumbnailHeight: 500,
+        itemsBaseURL: "http://res.cloudinary.com/dxnq7rjdn/image/upload/",
+        thumbnailDisplayTransition: "slideUp",
+        thumbnailDisplayTransitionDuration: 400,
+        locationHash: false,
+        galleryDisplayMode: "moreButton",
+        thumbnailHoverEffect2: "labelSlideUp|imageScaleIn80",
+      });
+          console.log('style2 set')
+          break;
+          case "Style3":
+          jQuery("#my_nanogallery2").nanogallery2('destroy');
+          jQuery("#my_nanogallery2").nanogallery2({
+        items: data,
+        thumbnailWidth: 100,
+        thumbnailHeight: 100,
+        itemsBaseURL: "http://res.cloudinary.com/dxnq7rjdn/image/upload/",
+        thumbnailDisplayTransition: "slideUp",
+        thumbnailDisplayTransitionDuration: 400,
+        locationHash: false,
+        galleryDisplayMode: "moreButton",
+        thumbnailHoverEffect2: "labelSlideUp|imageScaleIn80",
+        galleryMosaic:             [
+                                     { "w": 5, "h": 3, "c": 8, "r": 1 },
+                                     { "w": 2, "h": 2, "c": 12, "r": 2 },
+                                     { "w": 2, "h": 2, "c": 5, "r": 2 },
+                                     { "w": 2, "h": 2, "c": 11, "r": 4 },
+                                     { "w": 3, "h": 4, "c": 8, "r": 4 },
+                                     { "w": 3, "h": 4, "c": 5, "r": 4 },
+                                     { "w": 2, "h": 2, "c": 3, "r": 5 },
+                                     { "w": 4, "h": 2, "c": 1, "r": 6 },
+                                     { "w": 2, "h": 2, "c": 3, "r": 8 },
+                                     { "w": 6, "h": 4, "c": 5, "r": 8 },
+                                     { "w": 2, "h": 2, "c": 11, "r": 9 },
+                                   ]
+      });
+          console.log('style3 set')
+          break;
+      }
+    })
+    })
+//Toggling the Add more photos divs.
+    let add_button = document.getElementsByClassName('add-button')[0]
+    let addDiv = document.getElementsByClassName('add-img')[0]
+    add_button.addEventListener('click', ()=>{
+        if(addDiv.style.visibility !== 'visible') addDiv.style.visibility = 'visible'
+        else addDiv.style.visibility = 'hidden'
+      console.log('changed visibility')
+    })
+
+//Go back to index page
+let home_button = document.getElementsByClassName('home-button')[0]
+home_button.addEventListener('click', function(){
+    window.location.href = '/'
+})
+//Delete album
+let delete_album = document.getElementsByClassName('delete-album')[0]
+
+delete_album.addEventListener('click', function(){
+    var result = confirm("Are you sure you wanna delete this beautiful album?");
+        if (result) {
+            $.ajax({
+      url: window.location.href,
+      method: 'DELETE'
+      }).done(function() {console.log('done'); window.location.assign('/') });
+        }
+
+})</script>
+<script
+type="text/javascript"
+src="https://unpkg.com/nanogallery2/dist/jquery.nanogallery2.min.js"
+></script>
+  </body>
+</html>
