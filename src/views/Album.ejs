@@ -111,7 +111,7 @@
     <script >    jQuery(document).ready(function() {
       let urls  =  <%- JSON.stringify(nanoGallery) %> ;
      
-       data = urls.map((url)=>{ 
+      let data = urls.map((url)=>{ 
           return{src: url}
          })
       jQuery("#my_nanogallery2").nanogallery2({
