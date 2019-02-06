@@ -113,6 +113,7 @@
       const dataWithUrls = urls.map((url)=>{ 
           return{src: url}
          })
+         console.log('data with urls',dataWithUrls)
       jQuery("#my_nanogallery2").nanogallery2({
         items: dataWithUrls,
         thumbnailWidth: 100,
@@ -134,13 +135,13 @@
                                      { "w": 4, "h": 2, "c": 11, "r": 6 }
                                    ],
       });
-    });
-
+      
     let styleButtons = document.getElementsByClassName('layout btn')
     const buttonArray = Array.from(styleButtons)
     buttonArray.map((button)=>{
         button.addEventListener('click', function(e){
         console.log('target value: ',e.target.value)
+        
       switch(e.target.value){
           case "Style1":
           jQuery("#my_nanogallery2").nanogallery2('destroy');
@@ -148,7 +149,7 @@
         items: dataWithUrls,
         thumbnailWidth: 100,
         thumbnailHeight: 100,
-        itemsBaseURL: "http://res.cloudinary.com/dxnq7rjdn/image/upload/",
+        itemsBaseURL: "",
         thumbnailDisplayTransition: "slideUp",
         thumbnailDisplayTransitionDuration: 400,
         locationHash: false,
@@ -170,7 +171,7 @@
           case "Style2":
           jQuery("#my_nanogallery2").nanogallery2('destroy');
           jQuery("#my_nanogallery2").nanogallery2({
-        items: this.dataWithUrls,
+        items: dataWithUrls,
         thumbnailWidth: 500,
         thumbnailHeight: 500,
         itemsBaseURL: "http://res.cloudinary.com/dxnq7rjdn/image/upload/",
@@ -239,6 +240,10 @@ delete_album.addEventListener('click', function(){
       method: 'DELETE'
       }).done(function() {console.log('done'); window.location.assign('/') });
         }
+
+
+    });
+
 
 })</script>
 <script
