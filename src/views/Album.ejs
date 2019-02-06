@@ -109,9 +109,9 @@
     </div>
   
     <script >    jQuery(document).ready(function() {
-      let urls  =  <%- JSON.stringify(nanoGallery) %> ;
+      const urls  =  <%- JSON.stringify(nanoGallery) %> ;
      console.log('urls', urls)
-      let data = urls.map((url)=>{ 
+      const data = urls.map((url)=>{ 
           return{src: url}
          })
          console.log('data:', data)
