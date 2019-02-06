@@ -2,7 +2,7 @@
   "name": "nodeuploads",
   "version": "1.0.0",
   "description": "Example for image uploading in Node",
-  "main": "./src/server.js",
+  "main": "./dist/server.js",
   "scripts": {
     "start": "nodemon  npm run build && npm run serve",
     "build": "babel src --out-dir dist",
