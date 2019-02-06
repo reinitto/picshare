@@ -111,12 +111,12 @@
     <script >    jQuery(document).ready(function() {
       const urls  =  <%- JSON.stringify(nanoGallery) %> ;
      console.log('urls', urls)
-      const data = urls.map((url)=>{ 
+      const dataWithUrls = urls.map((url)=>{ 
           return{src: url}
          })
-         console.log('data:', data)
+         console.log('dataWithUrls:', dataWithUrls)
       jQuery("#my_nanogallery2").nanogallery2({
-        items: data,
+        items: dataWithUrls,
         thumbnailWidth: 100,
         thumbnailHeight: 100,
         itemsBaseURL: "",
@@ -147,7 +147,7 @@
           case "Style1":
           jQuery("#my_nanogallery2").nanogallery2('destroy');
           jQuery("#my_nanogallery2").nanogallery2({
-        items: data,
+        items: dataWithUrls,
         thumbnailWidth: 100,
         thumbnailHeight: 100,
         itemsBaseURL: "http://res.cloudinary.com/dxnq7rjdn/image/upload/",
@@ -172,7 +172,7 @@
           case "Style2":
           jQuery("#my_nanogallery2").nanogallery2('destroy');
           jQuery("#my_nanogallery2").nanogallery2({
-        items: data,
+        items: dataWithUrls,
         thumbnailWidth: 500,
         thumbnailHeight: 500,
         itemsBaseURL: "http://res.cloudinary.com/dxnq7rjdn/image/upload/",
@@ -187,7 +187,7 @@
           case "Style3":
           jQuery("#my_nanogallery2").nanogallery2('destroy');
           jQuery("#my_nanogallery2").nanogallery2({
-        items: data,
+        items: dataWithUrls,
         thumbnailWidth: 100,
         thumbnailHeight: 100,
         itemsBaseURL: "http://res.cloudinary.com/dxnq7rjdn/image/upload/",
