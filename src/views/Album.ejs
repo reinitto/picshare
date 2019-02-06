@@ -110,11 +110,9 @@
   
     <script >    jQuery(document).ready(function() {
       const urls  =  <%- JSON.stringify(nanoGallery) %> ;
-     console.log('urls', urls)
       const dataWithUrls = urls.map((url)=>{ 
           return{src: url}
          })
-         console.log('dataWithUrls:', dataWithUrls)
       jQuery("#my_nanogallery2").nanogallery2({
         items: dataWithUrls,
         thumbnailWidth: 100,
@@ -183,6 +181,7 @@
         thumbnailHoverEffect2: "labelSlideUp|imageScaleIn80",
       });
           console.log('style2 set')
+           console.log('this.dataWithUrls', this.dataWithUrls)
           break;
           case "Style3":
           jQuery("#my_nanogallery2").nanogallery2('destroy');
