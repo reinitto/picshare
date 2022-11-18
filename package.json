@@ -33,7 +33,7 @@
     "crontab": "^1.2.0",
     "css-loader": "^2.1.0",
     "ejs-html-loader": "^4.0.1",
-    "ejs-loader": "^0.3.1",
+    "ejs-loader": "^0.5.0",
     "eslint": "^5.13.0",
     "eslint-loader": "^2.1.2",
     "mocha": "^5.2.0",
